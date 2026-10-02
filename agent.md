@@ -6,14 +6,23 @@ Anda adalah seorang Principal Software Architect, Backend Engineer dan Frontend 
 
 ## 1. Arsitektur Inti & Filosofi
 * **Pemisahan Tanggung Jawab & Struktur Berlapis (*Layering & Separation of Concerns*):**
-  - `Endpoint / Controller` (`tech.harlabs.controller.*`): Mengelola validasi input HTTP, anotasi `@Valid`, status code HTTP, dan mendelegasikan pemrosesan ke Service/Handler. **Dilarang keras** menaruh logika bisnis atau query SQL langsung di Controller.
-  - `Service / Handler` (`tech.harlabs.handler.*`): Menampung aturan bisnis (*business rules*), orkestrasi lintas domain/tabel, integrasi kriptografi token (JWT, JWE RSA-OAEP-256), dan mengontrol batas transaksi (*transaction boundary*).
+  - `Endpoint / Web Controller` (`tech.harlabs.web.controller.*`): Mengelola input HTTP, form submission, status code, dan mendelegasikan pemrosesan ke Handler. **Dilarang keras** menaruh logika bisnis atau query SQL langsung di Controller.
+  - `Service / Handler` (`tech.harlabs.handler.*`): Menampung aturan bisnis (*business rules*), orkestrasi lintas domain/tabel, integrasi token sesi (JJWT), verifikasi kata sandi (Quarkus Security `BcryptUtil`), dan mengontrol batas transaksi (*transaction boundary*).
   - `Repository` (`tech.harlabs.repo.jdbi.*.*Repos`): Lapisan abstraksi data akses bean `@ApplicationScoped` yang mengorkestrasikan JDBI `withExtension`, `useExtension`, atau handle transaksi.
   - `DAO (JDBI SqlObject)` (`tech.harlabs.repo.jdbi.*.*Dao`): Interface JDBI 3 SqlObject untuk deklarasi query SQL statis (`@SqlQuery`, `@SqlUpdate`).
   - `Record / Model / Entity` (`tech.harlabs.repo.jdbi.*.*Ent`): Java Record immutable dengan konstanta string kolom untuk integritas kompilasi.
+* **Hierarki Peran 4-Tingkat (*4-Tier Roles*):**
+  - `super -> owner -> admin -> employee`.
+  - `super`: Akses ke seluruh sistem global. Hanya ada tepat satu akun bernama `sysadmin`.
+  - `owner`: Pengguna pemilik tenant/perusahaan. Dapat melihat dan mengelola seluruh data tenant miliknya, mengundang pegawai, dan mendefinisikan admin roles.
+  - `admin`: Pegawai yang diberikan izin administratif oleh Owner, dibatasi oleh daftar izin (*permissions*).
+  - `employee`: Pegawai biasa dalam suatu tenant. Hanya dapat mengakses data dirinya sendiri.
+* **Aturan Multi-Tenancy (Root Table Rule):**
+  - Setiap tabel data root (tabel operasional tenant) **WAJIB** menyertakan kolom `tenant_id UUID REFERENCES tenants(id)`.
+  - Seorang user dapat tergabung dalam lebih dari satu tenant melalui tabel `tenant_members`.
 * **Referensi Arsitektur:** Selalu ikuti seluruh standar database, schema, dan entity yang didefinisikan dalam `ARCHITECTURE.md`.
 * **Indeks Komponen:** Gunakan `PROJECT_INDEX.md` untuk melacak pemetaan lokasi package, DTO, Entity, DAO, Repository, dan Handler.
-* **Design Frontend:** Lihat di `docs/DESIGN.md` untuk menjadi guide dalam membuat frontend.
+* **Design Frontend:** Lihat di `docs/DESIGN.md` untuk panduan sistem desain PatternFly Enterprise Light Mode (https://www.patternfly.org/) dengan tema default terang yang nyaman di mata (anti-glare `bg-slate-100`), seluruh tipografi dan tulisan disatukan menggunakan font **Inter** resmi dari Google Fonts, posisi main view terpusat di tengah (`mx-auto`), dan aksen ungu terpercaya (`#6d28d9` / `purple-700`).
 
 ---
 
@@ -22,14 +31,18 @@ Anda adalah seorang Principal Software Architect, Backend Engineer dan Frontend 
   - Prioritaskan Java `record`, pattern matching untuk `switch` dan `instanceof`, multiline text blocks (`"""`), serta Virtual Threads jika relevan.
 * **Framework:** Quarkus REST (RESTEasy Reactive) dengan Jackson (`quarkus-rest-jackson`).
 * **Web UI Layer (SSR Monolith Terintegrasi):**
-  - **Quarkus Web Bundler:** Mengemas static bundle `app.js` dan `app.css` secara otomatis dari `src/main/resources/web/app/`.
-  - **Dependencies Frontend (mvnpm):** Dideklarasikan di `pom.xml` dengan `<scope>provided</scope>` (HTMX 2.0.4, Alpine.js 3.14.8, Hyperscript 0.9.14, Floating UI DOM 1.7.6 via `org.mvnpm.at.floating-ui:dom`, Line Awesome 1.3.0).
-  - **Styling:** Tailwind CSS v4 via `quarkus-web-bundler-tailwindcss` (`@import "tailwindcss";`), terintegrasi dengan tema pada `docs/DESIGN.md`.
+  - **Port Layanan:** Port HTTP default adalah **8698** (`quarkus.http.port=8698`).
+  - **Quarkus Web Bundler:** Mengemas static bundle `app.js` dan `app.css` secara otomatis dari `src/main/resources/web/`.
+  - **Dependencies Frontend (mvnpm):** Dideklarasikan di `pom.xml` dengan `<scope>provided</scope>` (HTMX 2.0.4, Alpine.js 3.14.8, Hyperscript 0.9.14, Floating UI DOM 1.6.13 via `org.mvnpm.at.floating-ui:dom`, Line Awesome 1.3.0).
+  - **Styling & Layout:** Tailwind CSS v4 dengan 100% font **Inter** di seluruh tulisan/elemen UI (`body, input, button, select, textarea, optgroup`), proteksi khusus icon font Line Awesome (`.la, .las, .lar, .lab { font-family: 'Line Awesome Free' !important; }`), kanvas Slate 100 (`#f1f5f9`) yang menyejukkan mata, main view terpusat di tengah (`w-full max-w-7xl mx-auto`), navigasi samping collapsible bebas flickering (`components/sidenav.html` dengan View Transitions, localStorage state persistence, dan active item non-reload), header terpadu dengan aksi profil & logout di pojok kanan atas (`components/header.html`), dan komponen dropdown modern (`components/dropdown.html` / `modernDropdown`).
   - **Templating & Type-Safe Templates:** Wajib menggunakan **Type-Safe Templates (`@CheckedTemplate` static class)** sesuai panduan resmi Quarkus Qute dengan dependensi `io.quarkus:quarkus-rest-qute`. Dilarang menggunakan injeksi runtime `@Inject Template` / `@Location` biasa agar seluruh ekspresi variabel dan parameter divalidasi pada saat build/kompilasi (`CheckedTemplate.HYPHENATED_ELEMENT_NAME`).
-  - **Web Security & Session:** Menggunakan `WebSessionFilter` (`@ServerRequestFilter(preMatching = true)`) dan `WebSessionHelper` untuk parsing cookie HTTP-only (`access_token`, `refresh_token`), transparan auto-refresh token, dan bridging ke header `Authorization: Bearer <token>`.
+  - **Web Security & Session:** Menggunakan `WebSessionFilter` (`@ServerRequestFilter(preMatching = true)`) dan `WebSessionHelper` untuk parsing cookie HTTP-only `seneca_session` yang ditandatangani via JJWT, serta memproteksi rute `/super/**` dan `/owner/**`.
   - **In-Process Controller:** Web Controller (`tech.harlabs.web.controller.*`) menginjeksi Service/Handler dan Repository CDI secara langsung (tanpa overhead HTTP/REST internal).
-* **Basis Data:** PostgreSQL 18+ (driver `io.quarkus:quarkus-jdbc-postgresql`, `org.jdbi:jdbi3-postgres`, Flyway PostgreSQL).
+* **Basis Data & Ekstensi:** PostgreSQL 18+ (driver `io.quarkus:quarkus-jdbc-postgresql`, `org.jdbi:jdbi3-postgres`, Flyway PostgreSQL).
   - Target database default: `seneca_hr_new`.
+  - **Biometrik Vektor Wajah (pgvector):** Menggunakan tipe native `vector(512)` via ekstensi `pgvector`.
+* **Flyway Migrations:**
+  - **Aturan Ketat:** Satu file migrasi untuk satu tabel (`V1__create_users.sql`, `V2__create_tenants.sql`, dst.).
 * **Persistensi (Dilarang Menggunakan Hibernate / JPA / Panache):**
   - Murni menggunakan **JDBI 3 Core**, **JDBI 3 SqlObject**, dan **JDBI 3 Postgres Plugin**.
   - **Entity/Tabel Database:** Wajib menggunakan Java `record` dengan konstanta compile-time (`public static final String TABLE_NAME`, `ID`, `FIELDS`, `BINDER`).

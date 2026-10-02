@@ -1,91 +1,92 @@
-# seneca-hr
+# Seneca HR Engine (High-Performance Multi-Tenant System)
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+Sistem transaksional *Human Resources* multi-tenant berbasis **Quarkus 3.40**, **Java 25**, **JDBI 3** (tanpa ORM/Hibernate), **PostgreSQL 18** dengan ekstensi **pgvector**, serta antarmuka web SSR bertema **PatternFly Enterprise Light Interface** (Qute Type-Safe Templates, Tailwind CSS v4, font Inter, Alpine.js, Line Awesome, dan HTMX).
 
-If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
+---
 
-## Running the application in dev mode
+## 1. Karakteristik & Hierarki Peran
 
-You can run your application in dev mode that enables live coding using:
+Sistem menerapkan hierarki 4 peran (*4-Tier Roles*):
+1. **`super` (`sysadmin`):** Akses tingkat tertinggi ke seluruh sistem. Hanya ada 1 akun global: `sysadmin@seneca.local`.
+2. **`owner`:** Pemilik organisasi/tenant. Mengontrol data seluruh tenant yang dimilikinya, mengundang pegawai, serta mendefinisikan Admin Roles kustom.
+3. **`admin`:** Pegawai yang diberikan izin administratif khusus oleh Owner (`EMPLOYEE_MANAGE`, `ATTENDANCE_VIEW`, dll.).
+4. **`employee`:** Pegawai biasa dalam tenant. Hanya dapat mengakses data pribadi.
 
-```shell script
+Setiap data root dalam organisasi wajib memiliki `tenant_id` (*Multi-Tenancy Rule*).
+
+---
+
+## 2. Akun Demo & Uji Coba Bawaan
+
+Kata sandi bawaan untuk seluruh akun demo di bawah ini adalah: **`Admin@Seneca2026!`**
+
+| Peran | Email | Kata Sandi | Portal Akses |
+|---|---|---|---|
+| **Super Admin** | `sysadmin@seneca.local` | `Admin@Seneca2026!` | `http://localhost:8698/super/dashboard` |
+| **Tenant Owner** | `owner@seneca.local` | `Admin@Seneca2026!` | `http://localhost:8698/owner/dashboard` |
+
+---
+
+## 3. Prasyarat & Menjalankan Aplikasi
+
+### 3.1 Basis Data PostgreSQL 18
+Pastikan PostgreSQL berjalan dengan ekstensi `vector` (pgvector) terpasang:
+```bash
+# Target database: seneca_hr_new
+docker exec -i postgres psql -U postgres -c "CREATE DATABASE seneca_hr_new;"
+docker exec -i postgres psql -U postgres -d seneca_hr_new -c "CREATE EXTENSION IF NOT EXISTS vector;"
+```
+
+### 3.2 Menjalankan dalam Mode Pengembangan (Dev Mode)
+Aplikasi berjalan pada port HTTP **8698**:
+```bash
 ./mvnw quarkus:dev
 ```
+Akses antarmuka web pada: **http://localhost:8698/login**
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
+### 3.3 Menjalankan Test Suite Otomatis
+```bash
+./mvnw test
+```
 
-## Packaging and running the application
-
-The application can be packaged using:
-
-```shell script
+### 3.4 Mengemas Aplikasi (Packaging)
+```bash
 ./mvnw package
+java -jar target/quarkus-app/quarkus-run.jar
 ```
 
-It produces the `quarkus-run.jar` file in the `target/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `target/quarkus-app/lib/` directory.
+---
 
-The application is now runnable using `java -jar target/quarkus-app/quarkus-run.jar`.
+## 4. Konfigurasi (`application.properties`)
 
-If you want to build an _über-jar_, execute the following command:
+```properties
+# Database Datasource
+quarkus.datasource.db-kind=postgresql
+quarkus.datasource.jdbc.url=jdbc:postgresql://localhost:5432/seneca_hr_new
+quarkus.datasource.username=postgres
+quarkus.datasource.password=admin12345
 
-```shell script
-./mvnw package -Dquarkus.package.jar.type=uber-jar
+# Flyway Migrations
+quarkus.flyway.migrate-at-start=true
+quarkus.flyway.locations=db/migration
+quarkus.flyway.baseline-on-migrate=true
+
+# HTTP Server Port
+quarkus.http.port=8698
+quarkus.http.auth.form.enabled=false
+quarkus.rest-csrf.enabled=false
+
+# Seneca Security & Session Token (JJWT)
+seneca.auth.session-secret=9f8c6b7e5d4a3b2c1f0e9d8c7b6a5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c9b8a
+seneca.auth.session-timeout-minutes=1440
 ```
 
-The application, packaged as an _über-jar_, is now runnable using `java -jar target/*-runner.jar`.
+---
 
-## Creating a native executable
+## 5. Dokumentasi Arsitektur Terkait
 
-You can create a native executable using:
-
-```shell script
-./mvnw package -Dnative
-```
-
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using:
-
-```shell script
-./mvnw package -Dnative -Dquarkus.native.container-build=true
-```
-
-You can then execute your native executable with: `./target/seneca-hr-1.0.0-SNAPSHOT-runner`
-
-If you want to learn more about building native executables, please consult <https://quarkus.io/guides/maven-tooling>.
-
-## Related Guides
-
-- Flyway ([guide](https://quarkus.io/guides/flyway)): Handle your database schema migrations
-- Qute Web ([guide](https://quarkiverse.github.io/quarkiverse-docs/quarkus-qute-web/dev/index.html)): Serves Qute templates directly over HTTP.
-- Qute ([guide](https://quarkus.io/guides/qute)): Offer templating support for web, email, etc in a build time, type-safe way
-- REST Qute ([guide](https://quarkus.io/guides/qute-reference#rest_integration)): Qute integration for Quarkus REST. This extension is not compatible with the quarkus-resteasy extension, or any of the extensions that depend on it.
-- REST Jackson ([guide](https://quarkus.io/guides/rest#json-serialisation)): Jackson serialization support for Quarkus REST. This extension is not compatible with the quarkus-resteasy extension, or any of the extensions that depend on it
-- Web Bundler ([guide](https://docs.quarkiverse.io/quarkus-web-bundler/dev/)): Creating full-stack Web Apps is fast and simple with this extension. Zero config bundling for your web-app scripts (js, jsx, ts, tsx), dependencies (jquery, react, htmx, ...) and styles (css, scss, sass).
-- JDBC Driver - PostgreSQL ([guide](https://quarkus.io/guides/datasource)): Connect to the PostgreSQL database via JDBC
-
-## Provided Code
-
-### Qute Web
-
-Qute templates like `some-page.html` served via HTTP automatically by Quarkus from the `src/main/resource/templates/pub` directory. No controllers needed. Once the quarkus app is started visit the generated page at http://localhost:8080/some-page?name=World
-
-[Related guide section...](https://docs.quarkiverse.io/quarkus-qute-web/dev/index.html)
-
-### REST
-
-Easily start your REST Web Services
-
-[Related guide section...](https://quarkus.io/guides/getting-started-reactive#reactive-jax-rs-resources)
-
-### REST Qute
-
-Create your web page using Quarkus REST and Qute
-
-[Related guide section...](https://quarkus.io/guides/qute#type-safe-templates)
-
-### Web Bundler
-
-This is a tiny app `web-bundler.html` to get started with the Web Bundler. Once the quarkus app is started visit the generated page at http://localhost:8080/web-bundler.html
-
-[Related guide section...](https://docs.quarkiverse.io/quarkus-web-bundler/dev/)
-
+- [ARCHITECTURE.md](ARCHITECTURE.md): Standar arsitektur perangkat lunak, ERD skema basis data, spesifikasi pgvector, dan keamanan sesi.
+- [PROJECT_INDEX.md](PROJECT_INDEX.md): Direktori pemetaan menyeluruh seluruh file kode, entity records, DAOs, repositories, handlers, controllers, dan templates.
+- [agent.md](agent.md): Panduan pengembangan kode bagi AI Agent / Engineer.
+- [docs/DESIGN.md](docs/DESIGN.md): Pedoman desain PatternFly Enterprise Light Interface.
+- [docs/todo/V0.0.1__module-user-dan-tenant.md](docs/todo/V0.0.1__module-user-dan-tenant.md): Spesifikasi modul User & Tenant V0.0.1.

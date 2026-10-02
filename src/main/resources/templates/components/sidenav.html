@@ -1,0 +1,109 @@
+<!-- Mobile Backdrop -->
+<div x-cloak x-show="mobileOpen" @click="mobileOpen = false"
+     x-transition:enter="transition-opacity ease-linear duration-200"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition-opacity ease-linear duration-200"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-40 lg:hidden"></div>
+
+<!-- Side Navigation Sidebar -->
+<aside class="fixed inset-y-0 left-0 z-50 lg:static bg-white border-r border-slate-200 flex flex-col shrink-0 lg:w-64 -translate-x-full lg:translate-x-0 transition-[width,transform] duration-200 ease-in-out"
+       :class="{
+           'translate-x-0 shadow-2xl': mobileOpen,
+           '-translate-x-full lg:translate-x-0': !mobileOpen,
+           'lg:w-20': sidebarCollapsed,
+           'lg:w-64': !sidebarCollapsed
+       }">
+
+    <!-- Brand / Header (Visible on Mobile / Sidebar Top) -->
+    <div class="h-16 flex items-center justify-between border-b border-slate-200 px-4 transition-all"
+         :class="sidebarCollapsed ? 'lg:justify-center' : 'justify-between'">
+        <div class="flex items-center gap-3 overflow-hidden">
+            <div class="w-9 h-9 rounded-xl bg-purple-700 flex items-center justify-center text-white font-black text-lg shadow-sm shadow-purple-600/30 shrink-0">
+                S
+            </div>
+            <div x-show="!sidebarCollapsed" class="truncate">
+                <div class="text-sm font-bold text-slate-900 tracking-tight">Seneca HR</div>
+                <div class="text-[10px] text-purple-600 font-semibold uppercase tracking-wider">
+                    {#if portal == "super"}Super Admin{#else}Owner Portal{/if}
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Close Button -->
+        <button @click="mobileOpen = false" class="lg:hidden p-1.5 text-slate-400 hover:text-slate-700 rounded-lg">
+            <i class="las la-times text-xl"></i>
+        </button>
+    </div>
+
+    <!-- Navigation Items -->
+    <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        {#if portal == "super"}
+            <!-- Super Portal Links -->
+            <a {#if activePage == 'dashboard'}href="javascript:void(0)" aria-current="page"{#else}href="/super/dashboard"{/if}
+               title="Dasbor Sistem"
+               class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-colors {#if activePage == 'dashboard'}bg-purple-50 text-purple-700 border-l-4 border-purple-700 font-semibold cursor-default{#else}text-slate-600 hover:bg-slate-50 hover:text-purple-700 font-medium{/if}"
+               :class="sidebarCollapsed ? 'justify-center !px-0' : 'px-3.5'">
+                <i class="las la-chart-pie text-xl shrink-0"></i>
+                <span x-show="!sidebarCollapsed" class="truncate">Dasbor Sistem</span>
+            </a>
+            <a {#if activePage == 'tenants'}href="javascript:void(0)" aria-current="page"{#else}href="/super/tenants"{/if}
+               title="Manajemen Tenant"
+               class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-colors {#if activePage == 'tenants'}bg-purple-50 text-purple-700 border-l-4 border-purple-700 font-semibold cursor-default{#else}text-slate-600 hover:bg-slate-50 hover:text-purple-700 font-medium{/if}"
+               :class="sidebarCollapsed ? 'justify-center !px-0' : 'px-3.5'">
+                <i class="las la-building text-xl shrink-0"></i>
+                <span x-show="!sidebarCollapsed" class="truncate">Manajemen Tenant</span>
+            </a>
+            <a {#if activePage == 'users'}href="javascript:void(0)" aria-current="page"{#else}href="/super/users"{/if}
+               title="Manajemen Pengguna"
+               class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-colors {#if activePage == 'users'}bg-purple-50 text-purple-700 border-l-4 border-purple-700 font-semibold cursor-default{#else}text-slate-600 hover:bg-slate-50 hover:text-purple-700 font-medium{/if}"
+               :class="sidebarCollapsed ? 'justify-center !px-0' : 'px-3.5'">
+                <i class="las la-users text-xl shrink-0"></i>
+                <span x-show="!sidebarCollapsed" class="truncate">Manajemen Pengguna</span>
+            </a>
+        {#else}
+            <!-- Owner Portal Links -->
+            <a {#if activePage == 'dashboard'}href="javascript:void(0)" aria-current="page"{#else}href="/owner/dashboard"{/if}
+               title="Dasbor Tenant"
+               class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-colors {#if activePage == 'dashboard'}bg-purple-50 text-purple-700 border-l-4 border-purple-700 font-semibold cursor-default{#else}text-slate-600 hover:bg-slate-50 hover:text-purple-700 font-medium{/if}"
+               :class="sidebarCollapsed ? 'justify-center !px-0' : 'px-3.5'">
+                <i class="las la-tachometer-alt text-xl shrink-0"></i>
+                <span x-show="!sidebarCollapsed" class="truncate">Dasbor Tenant</span>
+            </a>
+            <a {#if activePage == 'members'}href="javascript:void(0)" aria-current="page"{#else}href="/owner/members"{/if}
+               title="Pegawai & Anggota"
+               class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-colors {#if activePage == 'members'}bg-purple-50 text-purple-700 border-l-4 border-purple-700 font-semibold cursor-default{#else}text-slate-600 hover:bg-slate-50 hover:text-purple-700 font-medium{/if}"
+               :class="sidebarCollapsed ? 'justify-center !px-0' : 'px-3.5'">
+                <i class="las la-users-cog text-xl shrink-0"></i>
+                <span x-show="!sidebarCollapsed" class="truncate">Pegawai & Anggota</span>
+            </a>
+            <a {#if activePage == 'roles'}href="javascript:void(0)" aria-current="page"{#else}href="/owner/roles"{/if}
+               title="Admin Roles & Izin"
+               class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-colors {#if activePage == 'roles'}bg-purple-50 text-purple-700 border-l-4 border-purple-700 font-semibold cursor-default{#else}text-slate-600 hover:bg-slate-50 hover:text-purple-700 font-medium{/if}"
+               :class="sidebarCollapsed ? 'justify-center !px-0' : 'px-3.5'">
+                <i class="las la-user-shield text-xl shrink-0"></i>
+                <span x-show="!sidebarCollapsed" class="truncate">Admin Roles & Izin</span>
+            </a>
+            <a {#if activePage == 'face-embeddings'}href="javascript:void(0)" aria-current="page"{#else}href="/owner/face-embeddings"{/if}
+               title="Biometrik Wajah"
+               class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-colors {#if activePage == 'face-embeddings'}bg-purple-50 text-purple-700 border-l-4 border-purple-700 font-semibold cursor-default{#else}text-slate-600 hover:bg-slate-50 hover:text-purple-700 font-medium{/if}"
+               :class="sidebarCollapsed ? 'justify-center !px-0' : 'px-3.5'">
+                <i class="las la-fingerprint text-xl shrink-0"></i>
+                <span x-show="!sidebarCollapsed" class="truncate">Biometrik Wajah</span>
+            </a>
+        {/if}
+    </nav>
+
+    <!-- Sidebar Bottom Collapse Button (Desktop) -->
+    <div class="hidden lg:flex p-3 border-t border-slate-200 justify-center">
+        <button @click="sidebarCollapsed = !sidebarCollapsed"
+                class="w-full flex items-center justify-center p-2 rounded-lg text-slate-500 hover:text-purple-700 hover:bg-purple-50 text-xs font-medium transition-colors"
+                :title="sidebarCollapsed ? 'Perluas Sidebar' : 'Ciutkan Sidebar'">
+            <i class="las text-lg transition-transform duration-200"
+               :class="sidebarCollapsed ? 'la-angle-double-right' : 'la-angle-double-left'"></i>
+            <span x-show="!sidebarCollapsed" class="ml-2">Ciutkan Menu</span>
+        </button>
+    </div>
+</aside>

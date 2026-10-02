@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full bg-slate-100 text-slate-800">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{#insert title}Seneca HR{/insert} — Enterprise High-Performance HR Engine</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS v4 CDN with PatternFly Inspired Light Palette -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f5f3ff',
+                            100: '#ede9fe',
+                            200: '#ddd6fe',
+                            300: '#c4b5fd',
+                            400: '#a78bfa',
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                            700: '#6d28d9',
+                            800: '#5b21b6',
+                            900: '#4c1d95',
+                            950: '#2e1065'
+                        },
+                        surface: {
+                            DEFAULT: '#ffffff',
+                            canvas: '#f1f5f9',
+                            subtle: '#e2e8f0',
+                            border: '#e2e8f0',
+                            borderDark: '#cbd5e1'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Inter"', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                        mono: ['"Inter"', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Alpine.js & HTMX & Line Awesome (via Cloudflare CDNJS for ultra-fast reliable loading) -->
+    <script defer src="https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/css/line-awesome.min.css">
+    
+    <script>
+        // Global Modern Dropdown Component for Alpine.js
+        function modernDropdown(config) {
+            return {
+                open: false,
+                name: config.name || '',
+                value: config.value !== undefined ? String(config.value) : '',
+                label: config.label || '',
+                searchable: !!config.searchable,
+                searchQuery: '',
+                options: config.options || [],
+                onchange: config.onchange || '',
+                buttonClass: config.buttonClass || '',
+                init() {
+                    const found = this.options.find(o => String(o.value) === String(this.value));
+                    if (found) {
+                        this.label = found.label;
+                    } else if (this.options.length > 0 && !this.label) {
+                        this.label = this.options[0].label;
+                        this.value = String(this.options[0].value);
+                    }
+                },
+                filteredOptions() {
+                    if (!this.searchable || !this.searchQuery) return this.options;
+                    const q = this.searchQuery.toLowerCase();
+                    return this.options.filter(o => 
+                        (o.label && o.label.toLowerCase().includes(q)) || 
+                        (o.value && String(o.value).toLowerCase().includes(q)) ||
+                        (o.desc && o.desc.toLowerCase().includes(q))
+                    );
+                },
+                select(opt) {
+                    this.value = String(opt.value);
+                    this.label = opt.label;
+                    this.open = false;
+                    this.searchQuery = '';
+                    this.$nextTick(() => {
+                        if (this.onchange) {
+                            if (this.onchange === 'submit') {
+                                this.$el.closest('form')?.submit();
+                            } else {
+                                try {
+                                    new Function(this.onchange).call(this.$el);
+                                } catch (e) {
+                                    console.error('Dropdown onchange error:', e);
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Smooth Cross-Document View Transitions */
+        @view-transition {
+            navigation: auto;
+        }
+        ::view-transition-old(root),
+        ::view-transition-new(root) {
+            animation-duration: 0.15s;
+        }
+
+        /* Universal Typography: Inter */
+        body, input, button, select, textarea, optgroup {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        /* Strict protection for Line Awesome Icon Fonts */
+        .la, .las, .lar, .lab, [class*="la-"] {
+            font-family: 'Line Awesome Free' !important;
+            font-style: normal;
+        }
+        .lab {
+            font-family: 'Line Awesome Brands' !important;
+        }
+
+        [x-cloak] { display: none !important; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="h-full bg-slate-100 text-slate-800 antialiased font-sans selection:bg-purple-600 selection:text-white"
+      x-data="{ 
+          sidebarCollapsed: localStorage.getItem('seneca_sidebar_collapsed') === 'true', 
+          mobileOpen: false 
+      }"
+      x-init="$watch('sidebarCollapsed', val => localStorage.setItem('seneca_sidebar_collapsed', val))">
+
+{#insert body}
+<div class="p-8 text-center text-slate-500">Konten belum tersedia</div>
+{/insert}
+
+</body>
+</html>

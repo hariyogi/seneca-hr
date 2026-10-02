@@ -1,0 +1,58 @@
+<!-- Reusable Modern Dropdown Component -->
+<div x-data="modernDropdown({
+        name: '{name}',
+        value: '{value}',
+        label: '{label ?: ""}',
+        searchable: {searchable ?: false},
+        onchange: '{onchange ?: ""}'
+    })"
+     class="relative inline-block text-left w-full">
+    
+    <!-- Hidden input for standard form submission -->
+    <input type="hidden" :name="name" :value="value">
+
+    <!-- Trigger Button -->
+    <button type="button" @click="open = !open"
+            class="w-full flex items-center justify-between px-3.5 py-2 bg-white border border-slate-300 hover:border-purple-500 rounded-xl text-xs text-slate-800 font-medium shadow-xs focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 transition-all">
+        <span x-text="label || 'Pilih...'" class="truncate"></span>
+        <i class="las la-angle-down text-slate-400 transition-transform duration-200 shrink-0 ml-2"
+           :class="open ? 'rotate-180 text-purple-600' : ''"></i>
+    </button>
+
+    <!-- Dropdown Menu Panel -->
+    <div x-cloak x-show="open" @click.outside="open = false"
+         x-transition:enter="transition ease-out duration-100"
+         x-transition:enter-start="transform opacity-0 scale-95"
+         x-transition:enter-end="transform opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-75"
+         x-transition:leave-start="transform opacity-100 scale-100"
+         x-transition:leave-end="transform opacity-0 scale-95"
+         class="absolute z-50 mt-1.5 w-full min-w-[200px] bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden py-1">
+        
+        <!-- Search Input (if searchable) -->
+        <template x-if="searchable">
+            <div class="p-2 border-b border-slate-100 bg-slate-50/60">
+                <div class="relative">
+                    <i class="las la-search absolute left-2.5 top-2 text-slate-400 text-xs"></i>
+                    <input type="text" x-model="searchQuery" placeholder="Cari opsi..."
+                           class="w-full pl-7 pr-3 py-1 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-purple-600">
+                </div>
+            </div>
+        </template>
+
+        <!-- Options Container -->
+        <div class="max-h-56 overflow-y-auto py-1 divide-y divide-slate-50">
+            <template x-for="opt in filteredOptions()" :key="opt.value">
+                <button type="button" @click="select(opt)"
+                        class="w-full flex items-center justify-between px-3.5 py-2 text-xs text-left transition-colors"
+                        :class="value === String(opt.value) ? 'bg-purple-50 text-purple-700 font-semibold' : 'text-slate-700 hover:bg-slate-50 hover:text-purple-700'">
+                    <span x-text="opt.label" class="truncate"></span>
+                    <i x-show="value === String(opt.value)" class="las la-check text-purple-600 font-bold shrink-0 ml-2"></i>
+                </button>
+            </template>
+            <div x-show="filteredOptions().length === 0" class="px-4 py-3 text-center text-xs text-slate-400">
+                Tidak ada opsi yang cocok.
+            </div>
+        </div>
+    </div>
+</div>
