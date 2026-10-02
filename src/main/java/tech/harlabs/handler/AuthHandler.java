@@ -3,6 +3,7 @@ package tech.harlabs.handler;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.core.NewCookie;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -168,6 +169,7 @@ public class AuthHandler {
             .httpOnly(true)
             .sameSite(NewCookie.SameSite.LAX)
             .maxAge(0)
+            .expiry(new Date(0))
             .build();
     }
 }

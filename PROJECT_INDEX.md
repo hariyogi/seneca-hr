@@ -56,7 +56,7 @@ src/main/java/tech/harlabs/
         ├── PasswordUtil.java                 # Helper hashing BCrypt via Quarkus BcryptUtil
         ├── SenecaUserSession.java            # Model sesi terotentikasi pengguna
         ├── SessionTokenService.java          # Service signing & parsing token sesi JJWT
-        ├── WebSessionFilter.java             # @ServerRequestFilter pra-pencocokan & pelindung rute
+        ├── WebSessionFilter.java             # @ServerRequestFilter & @ServerResponseFilter (Role guard, Security headers, Anti-BFCache)
         └── WebSessionHelper.java             # RequestScoped accessor sesi pengguna
 ```
 
@@ -107,3 +107,16 @@ File: `src/main/resources/application.properties`
 - **Basis Data:** `seneca_hr_new` di `jdbc:postgresql://localhost:5432/seneca_hr_new`
 - **Flyway:** Aktif saat start (`quarkus.flyway.migrate-at-start=true`)
 - **Otentikasi:** Sesi cookie HTTP-Only `seneca_session` dengan masa aktif 1440 menit (24 jam)
+
+---
+
+## 5. Katalog Pengujian Otomatis (Test Suite)
+
+Direktori: `src/test/java/tech/harlabs/`
+
+| Kelas Uji | Fokus Pengujian |
+|---|---|
+| `SenecaSecurityTest.java` | Verifikasi header `Cache-Control: no-cache, no-store, must-revalidate`, header OWASP, invalidasi cookie kedaluwarsa lampau, dan proteksi replay rute setelah logout. |
+| `SenecaFlowTest.java` | Pengujian integrasi alur login sysadmin & owner, guard akses dashboard, tenant switching, dan CRUD permissions. |
+| `PasswordUtilTest.java` | Verifikasi akurasi hashing dan validasi verifikasi BCrypt. |
+| `GreetingResourceTest.java` | Pengujian dasar liveness REST endpoint. |

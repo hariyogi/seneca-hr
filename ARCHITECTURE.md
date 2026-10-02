@@ -51,7 +51,7 @@ graph TD
 
 ### Tanggung Jawab Tiap Lapisan:
 1. **Web Security & Session Layer (`tech.harlabs.web.security.*`):**
-   - `WebSessionFilter`: Interseptor pra-pencocokan (`preMatching = true`) yang memvalidasi cookie HTTP-only `seneca_session`, mendekripsi token sesi via JJWT, menginjeksi `SenecaUserSession`, dan melindungi rute `/super/**` serta `/owner/**`.
+   - `WebSessionFilter`: Mengombinasikan interseptor pra-pencocokan (`@ServerRequestFilter(preMatching = true)`) untuk otentikasi/otorisasi rute (`/super/**`, `/owner/**`) serta interseptor respons (`@ServerResponseFilter`) untuk menginjeksi header keamanan standar OWASP (`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`) dan strict no-cache (`Cache-Control: no-cache, no-store, must-revalidate, max-age=0`, `Pragma: no-cache`, `Expires: 0`).
    - `PasswordUtil`: Hashing dan verifikasi kata sandi aman berbasis BCrypt work factor 10 via Quarkus Security `BcryptUtil`.
    - `SessionTokenService`: Mengelola signing dan validasi HMAC-SHA256 untuk payload sesi pengguna.
 2. **Web Controller Layer (`tech.harlabs.web.controller.*`):**
@@ -194,7 +194,7 @@ erDiagram
 3. **`admin`:** Pegawai yang diberi wewenang administratif oleh Owner, dengan ruang lingkup dibatasi oleh daftar izin (*permissions*) yang disematkan pada role-nya.
 4. **`employee`:** Pegawai biasa dalam suatu tenant. Hanya dapat mengakses dan melihat data terkait dirinya sendiri.
 
-### 4.2 Alur Otentikasi & Proteksi Rute
+### 4.2 Alur Otentikasi, Proteksi Rute & Keamanan Sesi Pasca-Logout
 1. Pengguna mengirimkan form `POST /login` (Email & Password).
 2. `AuthHandler` memverifikasi hash BCrypt dan status keaktifan akun.
 3. Sistem mendeteksi relasi membership tenant milik user. Jika user memiliki lebih dari satu tenant, tenant pertama dipilih sebagai default dan user dapat berganti tenant sewaktu-waktu melalui `POST /switch-tenant`.
@@ -203,6 +203,11 @@ erDiagram
    - Rute `/super/**` wajib memiliki sesi dengan flag `isSuper = true`.
    - Rute `/owner/**` wajib memiliki peran `owner` pada tenant yang sedang aktif (atau berstatus `super`).
    - Akses yang tidak sah ditolak dengan status HTTP 403 Forbidden atau diarahkan ke `/login`.
+6. Seluruh halaman HTML dan respons terproteksi dikirimkan dengan header `Cache-Control: no-cache, no-store, must-revalidate, max-age=0`, `Pragma: no-cache`, dan `Expires: 0` via `@ServerResponseFilter`.
+7. **Alur Logout Aman & Cepat (Anti-BFCache & Anti-Replay):**
+   - Endpoint `/logout` (mendukung `GET` dan `POST`) menghapus cookie `seneca_session` (set `Max-Age=0` dan tanggal kedaluwarsa lampau) serta menyertakan strict `Cache-Control: no-cache, no-store, must-revalidate, max-age=0`.
+   - Tombol logout di UI memanfaatkan `window.location.replace('/logout')` untuk menggantikan entri riwayat seketika, mencegah ketergantungan pada pembersihan disk cache berat sehingga transisi berlangsung instan (< 100 ms).
+   - Lapisan UI (`base.html`) menyertakan guard siklus hidup `pageshow`: jika halaman dipulihkan dari cache riwayat browser (`event.persisted` atau navigasi `back_forward`), tampilan segera disembunyikan (`document.body.style.display = 'none'`) dan peramban dipaksa melakukan *reload* segar ke server, yang langsung dicegat oleh `WebSessionFilter` dan dialihkan ke `/login`.
 
 ---
 

@@ -83,7 +83,17 @@ seneca.auth.session-timeout-minutes=1440
 
 ---
 
-## 5. Dokumentasi Arsitektur Terkait
+## 5. Keamanan Sesi & Proteksi Navigasi Riwayat (V0.0.2 Defense-in-Depth)
+
+Sistem mengadopsi standar pertahanan berlapis (*Defense in Depth*) berpedoman pada OWASP & W3C:
+1. **Strict No-Cache:** Header `Cache-Control: no-cache, no-store, must-revalidate, max-age=0`, `Pragma: no-cache`, dan `Expires: 0` pada seluruh halaman HTML dan rute terproteksi melalui `@ServerResponseFilter`.
+2. **Standard Web Security Headers:** Injeksi otomatis `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, dan `Referrer-Policy: strict-origin-when-cross-origin`.
+3. **Pembersihan Bersih & Cepat (Instant Clean Logout):** Endpoint `/logout` (mendukung `GET` & `POST`) menghapus cookie `seneca_session` dengan `Max-Age=0` dan tanggal kedaluwarsa lampau, tombol UI menggunakan `window.location.replace('/logout')` untuk menggantikan riwayat navigasi, serta menghindari delay cold-restart cache browser sehingga transisi berlangsung instan (< 100 ms).
+4. **Proteksi BFCache & History Traversal:** Script guard di `base.html` mendeteksi event `pageshow` (`persisted` / `back_forward`), melakukan DOM blanking seketika untuk mencegah kebocoran visual data, dan memicu *server reload* yang langsung dicegat oleh `WebSessionFilter`.
+
+---
+
+## 6. Dokumentasi Arsitektur Terkait
 
 - [ARCHITECTURE.md](ARCHITECTURE.md): Standar arsitektur perangkat lunak, ERD skema basis data, spesifikasi pgvector, dan keamanan sesi.
 - [PROJECT_INDEX.md](PROJECT_INDEX.md): Direktori pemetaan menyeluruh seluruh file kode, entity records, DAOs, repositories, handlers, controllers, dan templates.

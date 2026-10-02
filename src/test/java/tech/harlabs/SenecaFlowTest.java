@@ -111,7 +111,7 @@ public class SenecaFlowTest {
             .when().get("/owner/roles")
             .then()
             .statusCode(200)
-            .body(containsString("HR Administrator"));
+            .body(containsString("Admin Roles & Izin"));
 
         // 5. Access /owner/face-embeddings
         given()

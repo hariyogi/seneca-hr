@@ -67,9 +67,22 @@ public class AuthController {
 
     @GET
     @Path("/logout")
-    public Response logout() {
+    public Response logoutGet() {
+        return handleLogout();
+    }
+
+    @POST
+    @Path("/logout")
+    public Response logoutPost() {
+        return handleLogout();
+    }
+
+    private Response handleLogout() {
         return Response.seeOther(URI.create("/login"))
             .cookie(authHandler.createLogoutCookie())
+            .header("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
+            .header("Pragma", "no-cache")
+            .header("Expires", "0")
             .build();
     }
 
